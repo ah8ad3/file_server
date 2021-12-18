@@ -32,16 +32,19 @@ func main() {
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
 	originsOk := handlers.AllowedOrigins([]string{"http://localhost:8080"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
-
+	fileServerPort := os.Getenv("FILESERVER_PORT")
+	if fileServerPort == "" {
+		fileServerPort = "8888"
+	}
 	srv := &http.Server{
-		Addr:         "0.0.0.0:8888",
+		Addr:         "0.0.0.0:" + fileServerPort,
 		ReadTimeout:  120 * time.Second,
 		WriteTimeout: 120 * time.Second,
 		Handler:      handlers.CORS(headersOk, originsOk, methodsOk)(router),
 	}
 	srv.SetKeepAlivesEnabled(false)
 
-	fmt.Println("Listening at :8888")
+	fmt.Println("Listening at :" + fileServerPort)
 	log.Fatal(srv.ListenAndServe())
 
 }
