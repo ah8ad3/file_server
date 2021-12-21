@@ -23,8 +23,14 @@ func (f *fileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 	authorization := r.Header.Get("Authorization")
 	authorization = strings.Replace(authorization, "Token ", "", 1)
 	path := r.FormValue("path")
+	splittedPath := strings.Split(path, "/")
+	if len(splittedPath) < 2 {
+		w.WriteHeader(400)
+		w.Write([]byte(fmt.Sprintf(`{"status": "%v"}`, "path is not in correct format")))
+		return
+	}
 
-	ff := file.File{FileName: path, Scope: "avatar"}
+	ff := file.File{FileName: path, Scope: splittedPath[0]}
 	_, err := f.fileService.HasPermission(ff, authorization)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
