@@ -13,6 +13,7 @@ type permission struct {
 	client           http.Client
 	timeout          int
 	permissionServer string
+	adminToken       string
 }
 
 func newPermission(permissonServer string) (http.Client, error) {
@@ -20,7 +21,7 @@ func newPermission(permissonServer string) (http.Client, error) {
 	return *client, nil
 }
 
-func NewPermission(permissonServer string, timeout int) (file.FilePermission, error) {
+func NewPermission(permissonServer, adminToken string, timeout int) (file.FilePermission, error) {
 	client, err := newPermission(permissonServer)
 	if err != nil {
 		return nil, err
@@ -29,10 +30,15 @@ func NewPermission(permissonServer string, timeout int) (file.FilePermission, er
 		client:           client,
 		timeout:          timeout,
 		permissionServer: permissonServer,
+		adminToken:       adminToken,
 	}, nil
 }
 
 func (p *permission) HasPermission(f file.File, jwt string) (bool, error) {
+	// ignore permission check if admin requests
+	if jwt == p.adminToken {
+		return true, nil
+	}
 	jsonValue, err := json.Marshal(f)
 	if err != nil {
 		return false, err

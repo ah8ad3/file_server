@@ -17,7 +17,8 @@ import (
 
 func main() {
 	pemissionUrl := os.Getenv("PERMISSION_URL")
-	per, err := permission.NewPermission(pemissionUrl, 5)
+	adminToken := os.Getenv("ADMIN_TOKEN")
+	per, err := permission.NewPermission(pemissionUrl, adminToken, 5)
 	if err != nil {
 		log.Fatal(err)
 	}
