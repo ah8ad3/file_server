@@ -10,12 +10,14 @@ import (
 )
 
 type fileHandler struct {
-	fileService file.FileService
+	fileService   file.FileService
+	allowedScopes []string
 }
 
-func NewFileHandler(fileService file.FileService) file.FileHandler {
+func NewFileHandler(fileService file.FileService, allowedScopes []string) file.FileHandler {
 	return &fileHandler{
-		fileService: fileService,
+		fileService:   fileService,
+		allowedScopes: allowedScopes,
 	}
 }
 
@@ -58,4 +60,26 @@ func (f *fileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
+}
+
+func (f *fileHandler) GetOpenAccessFile(w http.ResponseWriter, r *http.Request) {
+	path := r.FormValue("path")
+	splittedPath := strings.Split(path, "/")
+	if len(splittedPath) < 2 {
+		w.WriteHeader(400)
+		w.Write([]byte(fmt.Sprintf(`{"status": "%v"}`, "path is not in correct format")))
+		return
+	}
+	requestScope := splittedPath[0]
+	for _, scope := range f.allowedScopes {
+		if requestScope == scope {
+			err := f.fileService.ReverceProxy(w, r)
+			if err != nil {
+				log.Fatal(err)
+			}		
+		}
+	}
+	w.WriteHeader(403)
+	w.Write([]byte(fmt.Sprintf(`{"status": "%v"}`, "Scope is not allowed")))
+	return
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"strings"
 
 	"github.com/ah8ad3/file_server/api"
 	"github.com/ah8ad3/file_server/file"
@@ -23,11 +24,19 @@ func main() {
 		log.Fatal(err)
 	}
 	proxyPass := os.Getenv("PROXY_PASS")
+	openAccessScopes := os.Getenv("OPEN_ACCESS_SCOPES")
 	pr := proxy.NewProxy(proxyPass)
 	service := file.NewFileService(per, pr)
-	handler := api.NewFileHandler(service)
+
+	openScopes := make([]string, 0)
+	splittedPath := strings.Split(openAccessScopes, ",")
+	for _, scope := range splittedPath {
+		openScopes = append(openScopes, scope)
+	}
+	handler := api.NewFileHandler(service, openScopes)
 
 	router := mux.NewRouter()
+	router.Path("/file/open").Queries("path", "{path}").HandlerFunc(handler.GetOpenAccessFile).Methods("GET")
 	router.Path("/file").Queries("path", "{path}").HandlerFunc(handler.GetFile).Methods("GET")
 
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})

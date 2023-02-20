@@ -2,3 +2,4 @@ vendor/
 file_server
 .env
 run/
+run.sh
